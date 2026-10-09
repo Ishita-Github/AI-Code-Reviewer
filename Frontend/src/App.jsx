@@ -10,8 +10,8 @@ const Editor = editor.default
 
 
 function App() {
-  const [count, setCount] = useState(0)
   const [review, setReview] =useState("")
+  const [loading,setLoading] =useState(false)
   const [code, setCode] = useState( `function sum(){
   return 1+1
 }` )
@@ -22,9 +22,26 @@ function App() {
   }, [])
 
   async function reviewCode(){
-    const response= await axios.post('http://localhost:3000/ai/get-review', {code})
-    console.log(review)
-    setReview(response.data.review)
+    setLoading(true);
+    try {
+      const response = await axios.post(
+        'http://localhost:3000/ai/get-review',
+        { code }
+      )
+
+      console.log("Full response:", response)
+      console.log("Response data:", response.data.review)
+
+      setReview(response.data.review)
+    } catch (error) {
+      console.log("Error:", error)
+      if (error.response?.status === 429) {
+        setReview("Too many requests. Please try again later.")}
+      else {
+        setReview("Something went wrong. Please try again.")}
+      }finally{
+        setLoading(false);
+    }
   }
 
   return (
@@ -45,13 +62,13 @@ function App() {
               padding={10}
               style={{
                 fontFamily: '"Fira Code", "monospace" ',
-                fontSize: 50,
+                fontSize:50,
                 lineHeight: '1.5'
               }}
             />
           </div>
 
-          <div className="review" onClick={reviewCode}>Review</div>
+          <button className="review" onClick={reviewCode} disabled={loading}>{loading ? "Reviewing..." : "Review Code"}</button>
         </div>
 
         <div className="right">

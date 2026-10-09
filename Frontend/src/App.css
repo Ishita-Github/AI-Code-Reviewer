@@ -83,12 +83,13 @@ main .right{
   }
 
   .code {
-    height: calc(100% - 80px);
+    height:calc(100% - 80px);
   }
 
   main .left .review {
-    bottom: 1rem;
-    font-size: 1rem;
-    padding: 0.7rem 1.5rem;
+    bottom:1rem;
+    font-size:5rem;
+    padding:0.7rem 1.5rem;
+    text-align:left;
   }
 }

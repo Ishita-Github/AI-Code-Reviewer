@@ -69,6 +69,9 @@ Check:
 * F
 `
     });
+    if(!interaction.output_text){
+        throw new Error("AI returned an empty response")
+    }
     return interaction.output_text;
 }
 
