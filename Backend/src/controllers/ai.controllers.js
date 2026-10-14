@@ -17,28 +17,31 @@ async function getReview(req, res) {
         })
     }
     try {
-    const semgrepResults = await scanCode(code);
+    //const semgrepResults = await scanCode(code);
     const allowedLanguages=["javascript", "typescript", "python", "java", "c", "cpp", "go"];
     const language=allowedLanguages.includes(req.body?.language)? req.body.language: "auto-detect";
     
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
-    res.setHeader("Transfer-Encoding", "chunked");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("X-Accel-Buffering", "no");
+    res.flushHeaders();
 
+    console.time("semgrep");
+    console.timeEnd("semgrep");
+    console.time("first-chunk");
+    let first="true"
     const response = await aiService(code,language,(chunk) => {
+        if (first) { console.timeEnd("first-chunk"); first = false; }
         res.write(chunk);
     });
 
     res.end()
     } catch (error) {
         console.error("Review error:", error);
-
-    return res.status(500).json({
-        status: "Failed",
-        message: error.message
-    });
-    if (!res.headersSent) {
+        if (!res.headersSent) {
         return res.status(500).json({
-            message: "Review failed"
+            status:"Review Failed",
+            message: error.message
         });
     }
     res.end();

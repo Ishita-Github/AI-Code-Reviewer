@@ -1,2 +1,16 @@
-Backend/.env
+# Dependencies
 node_modules/
+Frontend/node_modules/
+Backend/node_modules/
+
+# Environment variables and secrets
+.env
+Backend/.env
+Frontend/.env
+
+# Build files
+dist/
+Frontend/dist/
+
+# Logs
+*.log

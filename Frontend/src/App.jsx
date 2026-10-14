@@ -9,6 +9,7 @@ import "prismjs/components/prism-cpp"   // must come after prism-c
 import "prismjs/components/prism-go"
 import editor from "react-simple-code-editor"
 import './App.css'
+import { parse, Allow } from "partial-json"
 
 const Editor = editor.default
 
@@ -17,7 +18,7 @@ function App() {
   const [review, setReview] =useState({summary: "",score: 0,issues: []})
   const [errorMessage, setErrorMessage] = useState("");
   const [loading,setLoading] =useState(false)
-  const [language, setLanguage] = useState("Javascript")
+  const [language, setLanguage] = useState("javascript")
   const [code, setCode] = useState( `function sum(){return 1+1}` )
   const [streamText, setStreamText] = useState("");
 
@@ -41,12 +42,21 @@ function App() {
       while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      const chunk = decoder.decode(value, { stream: true });
-      fullText += chunk;
-      setStreamText(prev => prev + chunk);
-      } 
-      const review = JSON.parse(fullText);
-      setReview(review)
+      fullText += decoder.decode(value, { stream: true });
+      try {
+        const partial = parse(fullText, Allow.OBJ | Allow.ARR | Allow.STR);
+        setReview({
+          summary: partial.summary ?? "",
+          score: partial.score ?? 0,
+          issues: partial.issues ?? [],
+        });
+      } catch {
+        
+      }
+    }
+  
+      setReview(JSON.parse(fullText));
+
     }
     catch (error) {
       console.error("Review error:", error);
@@ -82,9 +92,8 @@ function App() {
               }
               padding={10}
               style={{
-                fontFamily: '"Fira Code", "monospace" ',
-                fontSize:50,
-                lineHeight: '1.5'
+                fontFamily: 'Consolas, "Courier New", monospace',
+                width:'100%'
               }}
             />
           </div>
@@ -93,24 +102,25 @@ function App() {
         </div>
 
         <div className="right">
+          {errorMessage && <p className="error">{errorMessage}</p>}
           {
-            review && (
+            (loading || review.summary || review.issues.length > 0) && (
               <div className="response">
                 <h2>Code Review Results</h2>
                 <h4>Summary:</h4>
                 <br></br>
-                <p>{review.summary}</p>
+                <p>{review.summary}{loading && <span className="cursor">▍</span>}</p>
                 <br></br>
-                <h4>Score: {review.score}</h4>
+
+                {!loading && <h4>Score: {review.score}</h4>}
                 <br></br>
+
                 <h4>Issues Found: {review.issues.length}</h4>
                 {review.issues.map((issue,index) => (
                   <div className="issue" key={index}>
-                    <h5>Issue: {issue.problem}</h5>
-                    <p><strong>Line:</strong> {issue.line}</p>
-                    <p><strong>Severity:</strong> {issue.severity}</p>
-                    <p><strong>Category:</strong> {issue.category}</p>
-                    <p><strong>Suggested Fix:</strong> {issue.fix}</p>
+                    <h5>Issue: {issue.problem ?? "..."}</h5>
+                    {issue.line != null && <p><strong>Line:</strong> {issue.line}</p>}
+                    {issue.severity && <p><strong>Severity:</strong> {issue.severity}</p>}{issue.category && <p><strong>Category:</strong> {issue.category}</p>}{issue.fix && <p><strong>Suggested Fix:</strong> {issue.fix}</p>}
                   </div>
                 ))}
               </div>

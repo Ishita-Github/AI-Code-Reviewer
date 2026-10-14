@@ -55,6 +55,7 @@ async function generateResponse(code,language,onChunk) {
          ${reviewInstruction.securityAnalysisPrompt}
          ${reviewInstruction.codeQualityPrompt}
          ${reviewInstruction.verificationPrompt}`,
+        generation_config: {thinking_level: "low" },
         
 response_format: {
         type: "text",

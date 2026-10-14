@@ -1,6 +1,11 @@
+:root {
+  --editor-font: clamp(18px, 0.8vw + 12px, 26px);  /* code editor: ~23px on a laptop, 26px max */
+  --text-font: clamp(16px, 1.2vw + 10px, 26px);    /* results panel and labels */
+}
+
 *{
-  margin:0%;
-  padding:0%;
+  margin:0;
+  padding:0;
   box-sizing:border-box;
 }
 
@@ -10,86 +15,171 @@ html,body{
   background-color: rgb(59, 57, 57);
 }
 
+/* Overrides the leftover Vite template styles from index.css
+   (fixed 1126px width, centered text, side borders) */
 #root{
-  height:100%;
   width:100%;
+  max-width:none;
+  border-inline:none;
+  text-align:left;
 }
 
-main{
-  height:100%;
+main {
+  min-height:100vh;
+  min-height:100dvh;
   width:100%;
-  padding:3rem;
+  padding:clamp(1rem, 3vw, 2rem);
   display:flex;
-  gap:1rem;
+  gap:clamp(1rem, 2vw, 1.5rem);
+  color:#ececec;            /* index.css text color is dark in light-mode OS themes */
+  text-align:left;
 }
 
-
-main .left, main .right{
-  height:100%;
-  flex-basis:50%;
-  border-radius:5%;
-  margin:20px;
+main .left, main .right {
+  flex:1;
+  min-width:0;
+  border-radius:12px;
 }
 
-main .left{
+/* ---------- Left: editor ---------- */
+main .left {
   background-color:black;
-  position:relative;
-  padding:5rem;
+  display:flex;
+  flex-direction:column;
+  padding:clamp(1rem, 2vw, 1.5rem);
+}
+
+.code {
+  min-width:0;
+}
+
+.code label,
+.code select {
+  font-size:var(--text-font);
+}
+
+.code select {
+  margin:0 0 1rem 0.6rem;
+  padding:0.3em 0.6em;
+  background:#222;
+  color:#eee;
+  border:1px solid #555;
+  border-radius:0.5rem;
+  max-width:100%;
 }
 
 .code pre{
   border-radius:0.7rem;
 }
 
-main .left .review{
-  position:absolute;
-  bottom:5rem;
-  right:50%;
-  font-size:5rem;
+/* Textarea and highlighted <pre> must always share the same font settings */
+.code pre,
+.code textarea {
+  font-size:var(--editor-font);
+  line-height:1.6;
+}
+
+main .left .review {
+  align-self:center;
+  min-width:200px;
+  min-height:48px;
+  margin-top:1.5rem;
+  padding:0.6em 1.5em;
+  font-size:clamp(18px, 0.6vw + 14px, 24px);
+  font-weight:600;
   background-color:grey;
   color:black;
-  padding:4rem;
+  border:none;
   border-radius:0.7rem;
   cursor:pointer;
-  font-weight:5rem;
-  user-select:none;
 }
 
+main .left .review:disabled {
+  opacity:0.6;
+  cursor:not-allowed;
+}
+
+main .left .review:focus-visible,
+.code select:focus-visible {
+  outline:3px solid #8ab4ff;
+  outline-offset:2px;
+}
+
+/* ---------- Right: results ---------- */
 main .right{
   background-color:rgb(32, 32, 32);
-  padding:1rem 2rem; 
-  font-size:1.5rem;
+  padding:clamp(1rem, 2.5vw, 2rem);
+  font-size:var(--text-font);
   overflow:auto;
+  overflow-wrap:anywhere;
 }
 
+main .right h2,
+main .right h4,
+main .right h5 {
+  color:#fff;               /* index.css makes h2 near-black in light-mode OS themes */
+  font-size:1em;
+}
 
+main .right h2 {
+  font-size:1.25em;
+}
 
-@media (max-width: 700px) {
+.issue {
+  margin-top:1rem;
+  padding:1rem;
+  background:#2b2b2b;
+  border-left:4px solid #888;
+  border-radius:0.6rem;
+}
+
+.issue h5 { margin-bottom:0.5rem; }
+.issue p  { margin-top:0.25rem; }
+
+.error {
+  margin-bottom:1rem;
+  color:#ff9a9a;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cursor { animation:blink 1s steps(2, start) infinite; }
+}
+@keyframes blink { to { visibility:hidden; } }
+
+@media (max-width: 1000px) {
   main {
-    flex-direction: column;
-    padding: 1rem;
-    gap: 1rem;
+    flex-direction:column;
   }
 
   main .left,
   main .right {
-    flex: none;
-    width: 100%;
-    min-height: 500px;
+    flex:none;
+    width:100%;
   }
 
-  main .left {
-    padding: 1rem;
+  main .right {
+    min-height:240px;
   }
+}
 
-  .code {
-    height:calc(100% - 80px);
+@media (max-width: 520px) {
+  main {
+    padding:0.75rem;
   }
 
   main .left .review {
-    bottom:1rem;
-    font-size:5rem;
-    padding:0.7rem 1.5rem;
-    text-align:left;
+    width:100%;
+    min-width:0;
   }
+}
+.code pre,
+.code textarea {
+  font-size: 20px !important;
+  line-height: 1.6 !important;
+}
+
+main .right,
+.code label,
+.code select {
+  font-size: 18px;
 }
