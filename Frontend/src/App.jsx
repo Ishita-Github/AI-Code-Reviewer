@@ -1,21 +1,25 @@
 import {useState, useEffect } from 'react'
 import "prismjs/themes/prism-tomorrow.css"
 import prism from "prismjs"
+import "prismjs/components/prism-typescript"
+import "prismjs/components/prism-python"
+import "prismjs/components/prism-java"
+import "prismjs/components/prism-c"
+import "prismjs/components/prism-cpp"   // must come after prism-c
+import "prismjs/components/prism-go"
 import editor from "react-simple-code-editor"
-import axios from "axios"
-import Markdown from "react-markdown"
 import './App.css'
 
 const Editor = editor.default
 
 
 function App() {
-  const [review, setReview] =useState("")
+  const [review, setReview] =useState({summary: "",score: 0,issues: []})
+  const [errorMessage, setErrorMessage] = useState("");
   const [loading,setLoading] =useState(false)
-  const [code, setCode] = useState( `function sum(){
-  return 1+1
-}` )
-  
+  const [language, setLanguage] = useState("Javascript")
+  const [code, setCode] = useState( `function sum(){return 1+1}` )
+  const [streamText, setStreamText] = useState("");
 
   useEffect(() => {
     prism.highlightAll()
@@ -24,22 +28,31 @@ function App() {
   async function reviewCode(){
     setLoading(true);
     try {
-      const response = await axios.post(
-        'http://localhost:3000/ai/get-review',
-        { code }
-      )
-
-      console.log("Full response:", response)
-      console.log("Response data:", response.data.review)
-
-      setReview(response.data.review)
-    } catch (error) {
-      console.log("Error:", error)
-      if (error.response?.status === 429) {
-        setReview("Too many requests. Please try again later.")}
-      else {
-        setReview("Something went wrong. Please try again.")}
-      }finally{
+      const response = await fetch("http://localhost:3000/ai/get-review", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ code, language })});
+        if (!response.ok) {
+          throw new Error(`Request failed: ${response.status}`);
+        }
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullText = "";
+      while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value, { stream: true });
+      fullText += chunk;
+      setStreamText(prev => prev + chunk);
+      } 
+      const review = JSON.parse(fullText);
+      setReview(review)
+    }
+    catch (error) {
+      console.error("Review error:", error);
+      setErrorMessage(error.message || "Something went wrong.");
+    }
+    finally{
         setLoading(false);
     }
   }
@@ -49,14 +62,22 @@ function App() {
       <main>
         <div className="left">
           <div className="code">
+            <label htmlFor="language">Language:</label>
+            <select id="language" name="language" value={language} onChange={(e) => setLanguage(e.target.value)}>
+              <option value="JavaScript">JavaScript</option>
+              <option value="python">Python</option>
+              <option value="cpp">C++</option>
+              <option value="java">Java</option>
+              <option value="typescript">TypeScript</option>
+            </select>
             <Editor
               value={code}
               onValueChange={code => setCode(code)}
               highlight={code =>
                 prism.highlight(
                   code,
-                  prism.languages.javascript,
-                  "javascript"
+                  prism.languages[language]||prism.languages.javascript,
+                  language
                 )
               }
               padding={10}
@@ -72,7 +93,29 @@ function App() {
         </div>
 
         <div className="right">
-          <Markdown>{review}</Markdown>
+          {
+            review && (
+              <div className="response">
+                <h2>Code Review Results</h2>
+                <h4>Summary:</h4>
+                <br></br>
+                <p>{review.summary}</p>
+                <br></br>
+                <h4>Score: {review.score}</h4>
+                <br></br>
+                <h4>Issues Found: {review.issues.length}</h4>
+                {review.issues.map((issue,index) => (
+                  <div className="issue" key={index}>
+                    <h5>Issue: {issue.problem}</h5>
+                    <p><strong>Line:</strong> {issue.line}</p>
+                    <p><strong>Severity:</strong> {issue.severity}</p>
+                    <p><strong>Category:</strong> {issue.category}</p>
+                    <p><strong>Suggested Fix:</strong> {issue.fix}</p>
+                  </div>
+                ))}
+              </div>
+            )
+          }
         </div>
       </main>
     </>
