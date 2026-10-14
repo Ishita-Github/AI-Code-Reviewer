@@ -1,3 +1,4 @@
+
 # Dependencies
 node_modules/
 Frontend/node_modules/
@@ -5,6 +6,8 @@ Backend/node_modules/
 
 # Environment variables and secrets
 .env
+.env.*
+!.env.example
 Backend/.env
 Frontend/.env
 
